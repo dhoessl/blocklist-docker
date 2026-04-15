@@ -10,4 +10,4 @@ COPY ./blocklist-creator.py /blocklist-creator.py
 
 RUN chmod u+x /blocklist-creator.py
 
-ENTRYPOINT ["python3", "/blocklist-creator.py"]
+ENTRYPOINT ["/venv/bin/python3", "/blocklist-creator.py"]
