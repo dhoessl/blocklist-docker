@@ -6,10 +6,10 @@ if __name__ == "__main__":
     define_logger(to_file=True, logfile="/log/blocklist.log")
     collections = {
 {% for collection in blocklist_collections %}
-      "{{ blocklist.filename }}": "{{ blocklist.link }}",
+      "{{ collection.filename }}": "{{ collection.link }}",
 {% endfor %}
     }
     for collection in collections:
-      linkcollection = LinkCollection(collection)
+      linkcollection = LinkCollection(collections[collection])
       linkcollection.run()
-      linkcollection.save_to_file(f"/output/{collections[collection]}")
+      linkcollection.save_to_file(f"/output/{collection}")
