@@ -16,11 +16,14 @@
 
 - name: "Copy Dockerfile to host"
   ansible.builtin.copy:
-    src: "files/Dockerfile"
-    dest: "/opt/blocklist/docker/Dockerfile"
+    src: "files/{{ item.src }}"
+    dest: "/opt/blocklist/{{ item.dest }}/{{ item.src }}"
     owner: "{{ blocklist_docker_dockerfile_owner | default(blocklist_docker_owner | default('root')) }}"
     group: "{{ blocklist_docker_dockerfile_group | default(blocklist_docker_group | default('root')) }}"
     mode: "{{ blocklist_docker_dockerfile_mode | default('0644') }}"
+  loop:
+    - {"src": "Dockerfile", "dest": "docker"}
+    - {"src": "index.html", "dest": "public"}
   tags:
     - "blocklist:setup"
 

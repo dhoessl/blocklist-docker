@@ -3,6 +3,7 @@ galaxy_info:
   author: "dhoessl"
   description: "Create blocklists for pihole"
   company: ""
+  role_name: "blocklist_docker"
 
   license: "GPL-3.0-only"
 
