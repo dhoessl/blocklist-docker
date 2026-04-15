@@ -1,4 +1,4 @@
-FROM apline:latest
+FROM alpine:latest
 
 RUN apk add --no-cache python3 py3-pip
 RUN pip install --no-cache-dir -U pip git+https://github.com/dhoessl/blocklist-py

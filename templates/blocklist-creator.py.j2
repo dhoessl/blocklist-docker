@@ -10,6 +10,6 @@ if __name__ == "__main__":
 {% endfor %}
     }
     for collection in collections:
-      collection = LinkCollection(collection)
-      collection.run()
-      collection.save_to_file(f"/output/{collections[collection]}")
+      linkcollection = LinkCollection(collection)
+      linkcollection.run()
+      linkcollection.save_to_file(f"/output/{collections[collection]}")
