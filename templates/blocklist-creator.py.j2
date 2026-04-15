@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+
+from blocklist import LinkCollection, define_logger
+
+if __name__ == "__main__":
+    define_logger(to_file=True, logfile="/log/blocklist.log")
+    collections = {
+{% for collection in blocklist_collections %}
+      "{{ blocklist.filename }}": "{{ blocklist.link }}",
+{% endfor %}
+    }
+    for collection in collections:
+      collection = LinkCollection(collection)
+      collection.run()
+      collection.save_to_file(f"/output/{collections[collection]}")

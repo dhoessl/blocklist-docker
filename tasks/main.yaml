@@ -1,0 +1,57 @@
+---
+- name: "Create Directories"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+    state: "directory"
+  loop:
+    - {"path": "/opt/blocklist"}
+    - {"path": "/opt/blocklist/public"}
+    - {"path": "/opt/blocklist/log"}
+    - {"path": "/opt/blocklist/docker"}
+  tags:
+    - "blocklist:setup"
+
+- name: "Copy Dockerfile to host"
+  ansible.builtin.copy:
+    src: "files/Dockerfile"
+    dest: "/opt/blocklist/docker/Dockerfile"
+    owner: "{{ blocklist_docker_dockerfile_owner | default(blocklist_docker_owner | default('root')) }}"
+    group: "{{ blocklist_docker_dockerfile_group | default(blocklist_docker_group | default('root')) }}"
+    mode: "{{ blocklist_docker_dockerfile_mode | default('0644') }}"
+  tags:
+    - "blocklist:setup"
+
+- name: "Copy Script to host"
+  ansible.builtin.template:
+    src: "templates/blocklist-creator.py.j2"
+    dest: "/opt/blocklist/docker/blocklist-creator.py"
+    owner: "{{ blocklist_docker_script_owner | default(blocklist_docker_owner | default('root')) }}"
+    group: "{{ blocklist_docker_script_group | default(blocklist_docker_group | default('root')) }}"
+    mode: "{{ blocklist_script_mode | default('0644') }}"
+  tags:
+    - "blocklist:setup"
+
+- name: "Create Image"
+  community.docker.docker_image:
+    name: "dhoessl/blocklist"
+    source: "build"
+    build:
+      path: "/opt/blocklist/docker"
+      pull: true
+  tags:
+    - "blocklist:setup"
+
+- name: "Start Container to create new blocklists"
+  community.docker.docker_container:
+    name: "blocklist"
+    image: "dhoessl/blocklist"
+    auto_remove: true
+    volumes:
+      - "/opt/blocklist/public:/output"
+      - "/opt/blocklist/log:/log"
+  tags:
+    - "blocklist:run"
+...
