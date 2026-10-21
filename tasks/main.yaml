@@ -61,7 +61,7 @@
 
 - name: "Start blocklist container"
   containers.podman.podman_container:
-    tls_verify: "{{ blocklist_tls_verify | default(true) }}"
+    tls_verify: "{{ blocklist_tls_verify | default(true) | bool }}"
     name: "blocklist"
     image: "localhost/dhoessl/blocklist:latest"
     state: "started"
@@ -77,4 +77,15 @@
   loop:
     - "blocklist-creator.py"
     - "blocklist.Dockerfile"
+
+- name: "bind mount the container files"
+  ansible.posix.mount:
+    src: "{{ public_volume.volume.Mountpoint }}"
+    path: "{{ blocklist_bind_mount_target | default('/srv/blocklist') }}"
+    fstype: "none"
+    opts: bind,ro
+    dump: "0"
+    passno: "0"
+    state: "mounted"
+  when: "blocklist_bind_mount | default(false) | bool"
 ...
