@@ -63,7 +63,7 @@
   containers.podman.podman_container:
     tls_verify: "{{ blocklist_tls_verify | default(true) }}"
     name: "blocklist"
-    image: "localhost/dhoessl/blocklist:lastest"
+    image: "localhost/dhoessl/blocklist:latest"
     state: "started"
     restart_policy: "unless-stopped"
     volume:
