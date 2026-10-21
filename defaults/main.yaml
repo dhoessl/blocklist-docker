@@ -1,3 +1,5 @@
 ---
 blocklist_collections: []
+blocklist_docker_owner: "root"
+blocklist_docker_group: "root"
 ...

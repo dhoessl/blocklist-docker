@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM docker.io/library/alpine:latest
 
 RUN apk add --no-cache python3 py3-pip git
 RUN python3 -m venv venv \

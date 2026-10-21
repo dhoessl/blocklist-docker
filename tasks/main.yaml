@@ -1,60 +1,79 @@
 ---
-- name: "Create Directories"
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    owner: "{{ item.owner | default('root') }}"
-    group: "{{ item.group | default('root') }}"
-    mode: "{{ item.mode | default('0755') }}"
-    state: "directory"
-  loop:
-    - {"path": "/opt/blocklist"}
-    - {"path": "/opt/blocklist/public"}
-    - {"path": "/opt/blocklist/log"}
-    - {"path": "/opt/blocklist/docker"}
-  tags:
-    - "blocklist:setup"
+- name: "Create log volume"
+  containers.podman.podman_volume:
+    name: "blocklist_log"
+    state: "present"
 
-- name: "Copy Dockerfile to host"
+- name: "Create public volume"
+  containers.podman.podman_volume:
+    name: "blocklist_public"
+    state: "present"
+  register: "public_volume"
+
+- name: "Copy Dockerfile"
   ansible.builtin.copy:
-    src: "files/{{ item.src }}"
-    dest: "/opt/blocklist/{{ item.dest }}/{{ item.src }}"
-    owner: "{{ blocklist_docker_dockerfile_owner | default(blocklist_docker_owner | default('root')) }}"
-    group: "{{ blocklist_docker_dockerfile_group | default(blocklist_docker_group | default('root')) }}"
-    mode: "{{ blocklist_docker_dockerfile_mode | default('0644') }}"
-  loop:
-    - {"src": "Dockerfile", "dest": "docker"}
-    - {"src": "index.html", "dest": "public"}
-  tags:
-    - "blocklist:setup"
+    src: "files/Dockerfile"
+    dest: "/tmp/blocklist.Dockerfile"
+    owner: >-
+      {{
+        blocklist_docker_dockerfile_owner
+        | default(blocklist_docker_owner)
+      }}
+    group: >-
+      {{
+        blocklist_docker_dockerfile_group
+        | default(blocklist_docker_group)
+      }}
+    mode: "0644"
 
-- name: "Copy Script to host"
+- name: "Copy index"
+  ansible.builtin.copy:
+    src: "files/index.html"
+    dest: "{{ public_volume.volume.Mountpoint }}/index.html"
+    owner: "www-data"
+    group: "www-data"
+    mode: "0644"
+
+- name: "Copy Script"
   ansible.builtin.template:
     src: "templates/blocklist-creator.py.j2"
-    dest: "/opt/blocklist/docker/blocklist-creator.py"
-    owner: "{{ blocklist_docker_script_owner | default(blocklist_docker_owner | default('root')) }}"
-    group: "{{ blocklist_docker_script_group | default(blocklist_docker_group | default('root')) }}"
-    mode: "{{ blocklist_script_mode | default('0644') }}"
-  tags:
-    - "blocklist:setup"
+    dest: "/tmp/blocklist-creator.py"
+    owner: >-
+      {{
+        blocklist_docker_script_owner
+        | default(blocklist_docker_owner)
+      }}
+    group: >-
+      {{
+        blocklist_docker_script_group
+        | default(blocklist_docker_group)
+      }}
 
-- name: "Create Image"
-  community.docker.docker_image:
+- name: "Create Image from dockerfile"
+  containers.podman.podman_image:
     name: "dhoessl/blocklist"
-    source: "build"
+    tag: "latest"
+    path: "/tmp"
     build:
-      path: "/opt/blocklist/docker"
-      pull: true
-  tags:
-    - "blocklist:setup"
+      file: "blocklist.Dockerfile"
+    state: "present"
+    force: true
 
-- name: "Start Container to create new blocklists"
-  community.docker.docker_container:
+- name: "Start blocklist container"
+  containers.podman.podman_container:
     name: "blocklist"
-    image: "dhoessl/blocklist"
-    auto_remove: true
-    volumes:
-      - "/opt/blocklist/public:/output"
-      - "/opt/blocklist/log:/log"
-  tags:
-    - "blocklist:run"
+    image: "localhost/dhoessl/blocklist:lastest"
+    state: "started"
+    restart_policy: "unless-stopped"
+    volume:
+      - "blocklist_public:/output"
+      - "blocklist_log:/log"
+
+- name: "cleanup tmp files"
+  ansible.builtin.file:
+    path: "/tmp/{{ item }}"
+    state: "absent"
+  loop:
+    - "blocklist-creator.py"
+    - "blocklist.Dockerfile"
 ...

@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 from blocklist import LinkCollection, define_logger
+from time import sleep
+from datetime import datetime, timedelta, UTC
 
-if __name__ == "__main__":
+
+def main() -> None:
     define_logger(to_file=True, logfile="/log/blocklist.log")
     collections = {
 {% for collection in blocklist_collections %}
@@ -10,6 +13,21 @@ if __name__ == "__main__":
 {% endfor %}
     }
     for collection in collections:
-      linkcollection = LinkCollection(collections[collection])
-      linkcollection.run()
-      linkcollection.save_to_file(f"/output/{collection}.txt")
+        linkcollection = LinkCollection(collections[collection])
+        linkcollection.run()
+        linkcollection.save_to_file(f"/output/{collection}.txt")
+
+
+def already_run(last_run: datetime) -> bool:
+    if last_run + timedelta(hours=12) < datetime.now(UTC):
+        return False
+    return True
+
+
+if __name__ == "__main__":
+    last_run = datetime.now(UTC) - timedelta(hours=12)
+    while True:
+        if not already_run(last_run):
+            main()
+            last_run = datetime.now(UTC)
+        sleep(300)
