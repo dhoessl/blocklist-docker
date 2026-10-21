@@ -61,6 +61,7 @@
 
 - name: "Start blocklist container"
   containers.podman.podman_container:
+    tls_verify: "{{ blocklist_tls_verify | default(true) }}"
     name: "blocklist"
     image: "localhost/dhoessl/blocklist:lastest"
     state: "started"
